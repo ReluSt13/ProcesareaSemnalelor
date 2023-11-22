@@ -1,5 +1,6 @@
 import numpy as np
 from matplotlib import pyplot as plt
+from scipy import signal
 
 # ex1)
 # Cerinta: Generati un vector x[n] aleator de dimensiune N = 100. Calculati iteratia x <- x * x (convolutie) de trei ori. Afisati cele patru grafice
@@ -16,7 +17,7 @@ axs[1].plot(x1)
 axs[2].plot(x2)
 axs[3].plot(x3)
 fig.savefig('Tema6/ex1.pdf')
-# Ce observati? (COMPLETEAZA AICI)
+# Ce observati?
 # se face blending cu o versiune 'intarziata' a lui
 
 # ex2)
@@ -82,3 +83,70 @@ axs[2].plot(t, x * w2)
 fig.savefig('Tema6/ex3.pdf')
 
 # ex4)
+# Fisierul Train.csv contine date de trafic inregistrate pe o perioada de 1 saptamana.
+# Perioada de esantionare este de 1 ora, iar valorile masurate reprezinta numarul de vehicule ce trec printr-o anumita locatie.
+
+# Selectati din semnalul dat o portiune corespunzatoare pentru 3 zile, x, pe care veti lucra in continuare.
+data = np.genfromtxt('Tema6/Train.csv', delimiter=',', skip_header=1, dtype=None, encoding=None)
+x = data[(len(data) // 2 - 36):(len(data) // 2 + 36)]
+x_count_data = np.array([int(entry[2]) for entry in x])
+# Utilizati functia np.convolve(x, np.ones(w), 'valid) / w
+# pentru a realiza un filtru de tip medie alunecatoare si neteziti semnalul obtinut anterior.
+# Setati dimensiuni diferite ale ferestrei (variabila w in codul de mai sus), spre exemplu 5, 9, 13, 17
+x_filtered_w5 = np.convolve(x_count_data, np.ones(5), 'valid') / 5
+x_filtered_w9 = np.convolve(x_count_data, np.ones(9), 'valid') / 9
+x_filtered_w13 = np.convolve(x_count_data, np.ones(13), 'valid') / 13
+x_filtered_w17 = np.convolve(x_count_data, np.ones(17), 'valid') / 17
+
+plt.figure(12345)
+plt.plot(x_count_data, label='original')
+plt.plot(x_filtered_w5, label='w=5')
+plt.plot(x_filtered_w9, label='w=9')
+plt.plot(x_filtered_w13, label='w=13')
+plt.plot(x_filtered_w17, label='w=17')
+plt.legend()
+plt.savefig('Tema6/ex4_b.pdf')
+
+# Doriti sa filtrati zgomotul (frecvente inalte) din semnalul cu date de trafic; alegeti o frecventa de taiere pentru un filtru trece-jos
+# pe care il veti crea in continuare. Argumentati. Care este valoarea frecventei in Hz si care este valoarea frecventei normalizate
+# intre 0 si 1 unde 1 reprezinta frecventa Nyquist?
+
+# Frecventa de esantionare este de 1 / 3600 Hz
+# Frecventa maxima este de 1 / 7200 Hz (frecventa Nyquist)
+# Aleg frecventa inalta tot de 1 / 3600 Hz (frecventa de taiere)
+# Frecventa normalizata este de 1 / 2 = 0.5
+
+# Utilizand functiile si scipy.signal.butter si scipy.signal.cheby1 proiectati filtrele Butterworth si Chebyshev de ordin 5,
+# cu frecventa de taiere stabilita mai sus. Pentru inceput setati atenuarea ondulatiilor, rp = 5 dB, urmand ca apoi sa incercati si alte valori.
+coef_a_butter, coef_b_butter = signal.butter(5, 0.5, 'low')
+coef_a_cheby, coef_b_cheby = signal.cheby1(5, 5, 0.5, 'low')
+filtered_with_butter = signal.filtfilt(coef_a_butter, coef_b_butter, x_count_data)
+filtered_with_cheby = signal.filtfilt(coef_a_cheby, coef_b_cheby, x_count_data)
+plt.figure(123456)
+plt.plot(x_count_data, label='original')
+plt.plot(filtered_with_butter, label='butter')
+plt.plot(filtered_with_cheby, label='cheby')
+plt.legend()
+plt.savefig('Tema6/ex4_d.pdf')
+
+# Ce filtru alegeti din cele 2 si de ce?
+# As alege filtrul Butterworth pentru ca filtrul Chebyshev pare sa atenueze prea mult semnalul
+
+# Reproiectati filtrele alefand atat un ordin mai mic, cat si unul mai mare. De asemenea, reproiectati filtrul Chebyshev
+# cu alte avalori ale rp si observati efectul. Stabiliti valorile optime ale parametrilor incercati pentru a va atinge scopul.
+lower_coef_a_butter, lower_coef_b_butter = signal.butter(3, 0.5, 'low')
+higher_coef_a_butter, higher_coef_b_butter = signal.butter(11, 0.5, 'low')
+lower_filtered_with_butter = signal.filtfilt(lower_coef_a_butter, lower_coef_b_butter, x_count_data)
+higher_filtered_with_butter = signal.filtfilt(higher_coef_a_butter, higher_coef_b_butter, x_count_data)
+lower_coef_a_cheby, lower_coef_b_cheby = signal.cheby1(3, 3, 0.5, 'low')
+higher_coef_a_cheby, higher_coef_b_cheby = signal.cheby1(7, 7, 0.5, 'low')
+lower_filtered_with_cheby = signal.filtfilt(lower_coef_a_cheby, lower_coef_b_cheby, x_count_data)
+higher_filtered_with_cheby = signal.filtfilt(higher_coef_a_cheby, higher_coef_b_cheby, x_count_data)
+plt.figure(1234567)
+plt.plot(x_count_data, label='original')
+plt.plot(lower_filtered_with_butter, label='ordin 3 butter')
+plt.plot(higher_filtered_with_butter, label='ordin 11 butter')
+plt.plot(lower_filtered_with_cheby, label='ordin 3, rp 3 cheby')
+plt.plot(higher_filtered_with_cheby, label='ordin 7, rp 7 cheby')
+plt.legend()
+plt.savefig('Tema6/ex4_f.pdf')
