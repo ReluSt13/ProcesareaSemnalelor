@@ -35,6 +35,7 @@ fig.savefig("Tema8/ex1_a.pdf")
 # Verificati daca este o functie in numpy care sa calculeze aceasta cantitate.
 # Incercati sa intelegeti de unde vine aceasta cantitate.
 # Desenati vectorul de autocorelatie.
+
 # Formula taken from this site: https://otexts.com/fpp3/acf.html
 def autocorrelation_manual(y):
     N = len(y)
