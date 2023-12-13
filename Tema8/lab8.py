@@ -9,6 +9,7 @@ def sinusoidal(t, A, f, phi):
 # Generati o serie de timp aleatoare de dimensiune N = 1000 care sa fie suma a trei componente: trend, sezon si variatii mici.
 # Pentru componenta trend folositi o ecuatie de grad 2, pentru sezon folositi doua frecvente iar pentru variatiile mici folosind zgomot alb gaussian.
 # Desenati seria de timp si cele trei componente separat.
+np.random.seed(42)
 
 N = 1000
 t = np.arange(N)
@@ -57,9 +58,40 @@ r = r[len(r) // 2:]
 r_manual = autocorrelation_manual(serie)
 
 fig, ax = plt.subplots(2, figsize=(6, 8))
-fig.subplots_adjust(hspace=0.2)
+fig.subplots_adjust(hspace=0.3)
 ax[0].plot(r)
 ax[0].set_title("Autocorelatie numpy")
 ax[1].plot(r_manual)
 ax[1].set_title("Autocorelatie manual")
 fig.savefig("Tema8/ex1_b.pdf")
+
+# c)
+# Calculati un model AR de dimensiune p pentru seria de timp calcilata anterior.
+# Afisati pe ecran seria de timp originala si predictiile.
+
+p = 1
+
+train_size = int(0.9 * len(serie))
+train_data = serie[:train_size]
+test_data = serie[train_size:]
+
+# Create the matrix Y
+matrix = np.zeros((len(train_data) - p, p))
+for i in range(p):
+    matrix[:, i] = train_data[i:-p + i]
+
+# Use np.linalg.lstsq to solve for x in the equation y = Y * x
+y = train_data[p:]
+x, _, _, _ = np.linalg.lstsq(matrix, y, rcond=None)
+
+
+# Predict the next len(test_data) values
+predictions = np.zeros(len(test_data))
+for i in range(len(test_data)):
+    predictions[i] = x.T @ train_data[-1:-p - i:-1]
+
+fig, ax = plt.subplots(2, figsize=(6, 4))
+ax.plot(test_data, label="Real")
+ax.plot(predictions, label="Predictions")
+ax.legend()
+fig.savefig("Tema8/ex1_c.pdf")
