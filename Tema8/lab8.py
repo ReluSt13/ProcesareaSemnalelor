@@ -69,7 +69,7 @@ fig.savefig("Tema8/ex1_b.pdf")
 # Calculati un model AR de dimensiune p pentru seria de timp calcilata anterior.
 # Afisati pe ecran seria de timp originala si predictiile.
 
-p = 1
+p = 300
 
 train_size = int(0.9 * len(serie))
 train_data = serie[:train_size]
@@ -88,10 +88,12 @@ x, _, _, _ = np.linalg.lstsq(matrix, y, rcond=None)
 # Predict the next len(test_data) values
 predictions = np.zeros(len(test_data))
 for i in range(len(test_data)):
-    predictions[i] = x.T @ train_data[-1:-p - i:-1]
+    for j in range(p):
+        predictions[i] += x[-j - 1] * train_data[len(train_data) - j - i - 1]
 
-fig, ax = plt.subplots(2, figsize=(6, 4))
-ax.plot(test_data, label="Real")
-ax.plot(predictions, label="Predictions")
-ax.legend()
-fig.savefig("Tema8/ex1_c.pdf")
+plt.figure(figsize=(6, 4))
+plt.plot(train_data, label="Train data")
+plt.plot(np.arange(len(train_data), len(serie)), predictions, label="Predictions")
+plt.plot(np.arange(len(train_data), len(serie)), test_data, label="Test data")
+plt.legend()
+plt.savefig("Tema8/ex1_c.pdf")
