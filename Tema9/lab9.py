@@ -67,3 +67,41 @@ fig.savefig("Tema9/ex2_best_alpha.pdf")
 # Generati un model MA cu orizont q pentru seria de timp utilizata anterior.
 # Termenii de eroare epsilon[i] puteti sa ii considerati elemente aleatoare
 # extrase din distributia normala standard.
+
+# NU FUNCTIONEAZA
+q = 10
+
+train_size = int(0.9 * len(serie))
+train_data = serie[:train_size]
+test_data = serie[train_size:]
+
+mu = np.mean(train_data)
+
+matrix = np.zeros((len(train_data) - q + 1, q))
+for i in range(q):
+    matrix[:, i] = np.random.randn()
+for i in range(matrix.shape[1]):
+    matrix[-1, i] = mu
+
+y = train_data[q:]
+y = np.append(y, mu)
+thetas, _, _, _ = np.linalg.lstsq(matrix, y, rcond=None)
+
+print(thetas)
+
+predictions = np.zeros(len(test_data))
+data = train_data.copy().tolist()
+
+for i in range(len(test_data)):
+    for j in range(q):
+        predictions[i] += thetas[-j - 1] * matrix[len(matrix) - i - 1, j]
+    predictions[i] += mu
+    data.append(predictions[i])
+print(predictions)
+print(mu)
+plt.figure(figsize=(6, 4))
+plt.plot(train_data, label="Train data")
+plt.plot(np.arange(len(train_data), len(serie)), predictions, label="Predictions q = 10")
+plt.plot(np.arange(len(train_data), len(serie)), test_data, label="Test data")
+plt.legend()
+plt.savefig("Tema9/ex3.pdf")
